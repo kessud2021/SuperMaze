@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SuperMaze Leaderboard 🏆</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: var(--bg, #0d1117);
+      color: var(--text, #fff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    table {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.05);
+      border-collapse: collapse;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+    }
+
+    th {
+      background: rgba(255,255,255,0.1);
+    }
+
+    tr:nth-child(even) {
+      background: rgba(255,255,255,0.03);
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      background: linear-gradient(135deg, #00bcd4, #009688);
+      color: white;
+    }
+
+    .theme-light {
+      --bg: #f9f9f9;
+      --text: #222;
+    }
+
+    td.diff-easy { color: #7CFC00; font-weight: 600; }
+    td.diff-normal { color: #FFD700; font-weight: 600; }
+    td.diff-hard { color: #FF5555; font-weight: 600; }
+
+    .empty {
+      margin-top: 12px;
+      color: #aaa;
+      font-style: italic;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .pagination button {
+      background: #444;
+      padding: 6px 12px;
+      border-radius: 6px;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏆 SuperMaze Leaderboard</h1>
+  <table id="leaderboard-table" aria-describedby="leaderboard-desc">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Username</th>
+        <th>Level</th>
+        <th>Difficulty</th>
+        <th>Time</th>
+        <th>XP</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <p id="leaderboard-desc" class="empty d-none">No runs yet. Play a game to appear here!</p>
+  <button id="back-btn">⬅ Back to Menu</button>
+  <div id="pagination" class="pagination"></div>
+
+  <script>
+    // Safe parse of leaderboard
+    let raw = localStorage.getItem("maze_leaderboard");
+    let leaderboard = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) leaderboard = parsed;
+    } catch (err) {
+      console.warn("Failed to parse leaderboard from localStorage:", err);
+      leaderboard = [];
+    }
+
+    const tableBody = document.querySelector("#leaderboard-table tbody");
+    const emptyMsg = document.getElementById("leaderboard-desc");
+
+    // Safe time formatter - returns placeholder when value invalid
+    function formatTime(ms) {
+      if (ms === null || ms === undefined) return "--:--.---";
+      const n = Number(ms);
+      if (!isFinite(n) || n < 0) return "--:--.---";
+
+      const totalSeconds = n / 1000;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const millis = Math.floor(n % 1000);
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
+    }
+
+    // Guard: if leaderboard empty show message
+    if (!leaderboard || leaderboard.length === 0) {
+      emptyMsg.classList.remove("d-none");
+    } else {
+      emptyMsg.classList.add("d-none");
+
+      // Ensure all runs have sane fields and convert types
+      const safeRuns = leaderboard.map(run => {
+        return {
+          username: run.username || "Unknown",
+          time: (run.time === undefined || run.time === null) ? null : Number(run.time),
+          xp: (run.xp === undefined || run.xp === null) ? 0 : Number(run.xp),
+          difficulty: run.difficulty || "normal",
+          date: run.date || new Date().toISOString(),
+        };
+      });
+
+      // Sort by time first, then XP if times are equal
+      safeRuns
+        .sort((a, b) => {
+          const ta = (typeof a.time === "number" && isFinite(a.time)) ? a.time : Number.MAX_SAFE_INTEGER;
+          const tb = (typeof b.time === "number" && isFinite(b.time)) ? b.time : Number.MAX_SAFE_INTEGER;
+          if (ta !== tb) return ta - tb;
+          return b.xp - a.xp; // Sort by XP if times are equal
+        });
+
+      // Paginate leaderboard
+      const itemsPerPage = 5;
+      const totalPages = Math.ceil(safeRuns.length / itemsPerPage);
+      let currentPage = 1;
+
+      function renderPage(page) {
+        tableBody.innerHTML = "";
+        const start = (page - 1) * itemsPerPage;
+        const end = Math.min(start + itemsPerPage, safeRuns.length);
+        const currentRuns = safeRuns.slice(start, end);
+
+        currentRuns.forEach((run, i) => {
+          const level = Math.floor((run.xp || 0) / 100);
+          const tr = document.createElement("tr");
+          const diff = (run.difficulty || "normal").toLowerCase();
+          tr.innerHTML = `
+            <td>${start + i + 1}</td>
+            <td>${escapeHtml(run.username)}</td>
+            <td>Lv. ${level}</td>
+            <td class="diff-${diff}">${diff.toUpperCase()}</td>
+            <td>${formatTime(run.time)}</td>
+            <td>${Number.isFinite(run.xp) ? run.xp : 0}</td>
+            <td>${safeDate(run.date)}</td>
+          `;
+          tableBody.appendChild(tr);
+        });
+
+        updatePagination(page);
+      }
+
+      // Create pagination buttons
+      function updatePagination(page) {
+        const pagination = document.getElementById("pagination");
+        pagination.innerHTML = "";
+        for (let i = 1; i <= totalPages; i++) {
+          const btn = document.createElement("button");
+          btn.textContent = i;
+          btn.onclick = () => renderPage(i);
+          if (i === page) btn.disabled = true;
+          pagination.appendChild(btn);
+        }
+      }
+
+      renderPage(currentPage);
+    }
+
+    // Back button
+    const backBtn = document.getElementById("back-btn");
+    backBtn && (backBtn.onclick = () => { window.location.href = "index.html"; });
+
+    // Theme application if saved
+    if (localStorage.getItem("theme") === "light") {
+      document.body.classList.add("theme-light");
+    }
+
+    // Small helpers
+    function safeDate(d) {
+      try {
+        const dt = new Date(d);
+        if (isNaN(dt.getTime())) return "-";
+        return dt.toLocaleString();
+      } catch {
+        return "-";
+      }
+    }
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
