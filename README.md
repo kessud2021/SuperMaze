@@ -1,5 +1,13 @@
 # 🌀 SuperMaze
 
+![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/kessud2021/SuperMaze/total?logo=github&color=dark_green)
+![GitHub last commit](https://img.shields.io/github/last-commit/kessud2021/SuperMaze?logo=github)
+![GitHub repo size](https://img.shields.io/github/repo-size/kessud2021/SuperMaze)
+![GitHub License](https://img.shields.io/github/license/kessud2021/SuperMaze)
+
+
+
+
 **SuperMaze** is a maze game built with **HTML, CSS, and JavaScript**, featuring both singleplayer and multiplayer modes.  
 It uses a **Node.js + WebSocket server** for real-time multiplayer and admin dashboard features.  
 Each run generates a maze, and you can track players live in the admin panel.
