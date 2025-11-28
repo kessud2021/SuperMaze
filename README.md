@@ -1,28 +1,33 @@
 # 🌀 SuperMaze
 
 **SuperMaze** is a maze game built with **HTML, CSS, and JavaScript**, featuring both singleplayer and multiplayer modes.  
-You can connect it to a **Java-based Maze Server** if you want to play with friends.  
-Each run generates a brand-new maze — so no two games are ever the same.
+It uses a **Node.js + WebSocket server** for real-time multiplayer and admin dashboard features.  
+Each run generates a maze, and you can track players live in the admin panel.
 
 ---
 
 ## 🎮 Features
 
-- 🧩 **Dynamic Maze Generation** (via API)
-- 🧍 **Singleplayer Mode** — explore solo
-- 🌐 **Multiplayer Mode** — connect via WebSocket
+- 🧩 **Dynamic Maze Editor** — create mazes from 5x5 to 50x50
+- 🧍 **Singleplayer Mode** — play solo
+- 🌐 **Multiplayer Mode** — connect via WebSocket server
 - 🟩 **Start (Green)** and 🟥 **End (Red)** markers
-- 🏆 **Victory Screen** when you reach the goal
-- 🎨 **Themes** — Light, Dark, Blue, Green, Pink, Red
-- 💾 **Export Options** — save your maze as JSON or XML
+- 🏆 **Victory Screen** and leaderboard
+- 🎨 **Glass / Aero UI** with gradient backgrounds
+- 💾 **Save & Load** mazes locally (JSON)
+- 🖥️ **Admin Panel**:
+  - Live player tracking
+  - Server dashboard with online/offline status
+  - Home screen title customization
+- ⏱️ **Server Time** display in admin panel
 
 ---
 
 ## 🚀 Getting Started
 
 ### 🔧 Requirements
-- A modern web browser (Chrome, Edge, Firefox, etc.)
-- Optional: **Java 17+** if you want to run the Maze Server
+- Node.js 18+  
+- Modern web browser (Chrome, Edge, Firefox, etc.)
 
 ---
 
@@ -31,70 +36,102 @@ Each run generates a brand-new maze — so no two games are ever the same.
 ```bash
 git clone https://github.com/kessud2021/SuperMaze.git
 cd SuperMaze
-Then open index.html in your browser.
+```
+Open `index.html` in your browser.
+
+Steps:
+
+Press **Play Maze**
+
+Load a saved maze or create a new one in the editor
+
+Use **WASD** to move
+
+Reach the **End (Blue)** cell to finish the maze
+
+Time is automatically recorded for the leaderboard
+
+## 🌐 Multiplayer Setup
+
+Install dependencies:
+`
+npm install express ws
+`
+
+Start the server:
+`
+node server.js
+`
+
+The server will:
+
+- Host the leaderboard
+
+- Handle saving maze scores
+
+- Allow real-time dashboard stats
+
+- Serve /public files
+
+## 🔐 Admin Panel
+
+The admin panel is used to:
+
+- Edit front-page title
+
+- Manage mazes
+
+- View the real-time dashboard
+
+- Change server configuration
+
+Default password
+
+`boorger123`
+
+➡️ You can change this inside `public/index.html` — fully customizable.
+
+## 📊 Real-time Dashboard
+
+A separate dashboard page shows:
+
+- Active players
+
+- Leaderboard updates
+
+- Requests per second
+
+- Server uptime
+
+- WebSocket connections
+
+- Updates in real time through WebSockets.
+
+## 📁 Project Structure
+```
+SuperMaze/
+ ├── public/
+ │   ├── index.html
+ │   ├── editor.html
+ │   ├── dashboard.html
+ │   ├── style.css
+ │   └── main.js
+ ├── server.js
+ └── README.md
 ```
 
-Select Singleplayer
+## ✔️ Features
 
-Choose your theme
+- Fully working Maze Editor
 
-Press Start Game
+- Play Maze (with WASD)
 
-Use your Arrow Keys to move
+- Transparent glossy UI (Aero style)
 
-Reach the red square to win 🏆
+Leaderboard JSON storage
 
-## 🌐 Multiplayer Setup (Optional)
-Compile and run the Maze Server Java project yourself:
-```
-javac -d out src/**/*.java
-java -cp out VSSCO.supermazeserver.Main
-```
-Get your local IP address or server IP
+- Admin panel with password
 
+- Real-time dashboard
 
-In the game, select Multiplayer
-
-Enter the server address and start playing with friends!
-
-## 🧠 API
-The maze layout is generated using a Maze Generator API.
-You can swap in your own API or host one locally for full control.
-
-## 🎨 Customization
-Change maze size in script.js
-
-```
-const size = 20;
-```
-Update API URL inside generateMaze()
-
-Modify wall and cell colors in style.css
-
-Edit the victory screen style at the bottom of script.js
-
-## 🧩 Planned Additions
-Player stats & victory tracking (MySQL / PHP / Node)
-
-Local leaderboard
-
-Pathfinding-based maze generation
-
-Sounds and better animations
-
-🧑‍💻 Built With
-HTML5
-
-CSS3 (Bootstrap 5)
-
-Vanilla JavaScript
-
-WebSocket / Java (for server)
-
-## 🧠 Notes
-Players who want to use the multiplayer mode must compile the Java server themselves.
-The client (this repo) just connects through WebSockets.
-
-## 📜 License
-Open source.
-Feel free to fork, edit, or improve — just give credit somewhere! ❤️
+- Multiplayer-compatible server
