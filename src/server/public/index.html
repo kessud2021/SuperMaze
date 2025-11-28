@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SuperMaze - Glossy Aero Edition</title>
+<style>
+/* --- General Styles --- */
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:linear-gradient(135deg,#1a1a2e,#162447); color:#f0f0f5;
+  display:flex; justify-content:center; align-items:center; height:100vh; }
+
+/* --- Glass Panels --- */
+.glass { backdrop-filter:blur(15px) saturate(180%);
+  background-color: rgba(255,255,255,0.08); border-radius:20px;
+  padding:30px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.18); transition:all 0.3s ease; }
+
+/* --- Buttons --- */
+button { padding:10px 20px; margin:5px; border:none; border-radius:12px;
+  cursor:pointer; font-weight:bold; background:linear-gradient(145deg,#6c63ff,#a29bfe);
+  color:white; box-shadow:0 4px 6px rgba(0,0,0,0.3); transition:0.2s; }
+button:hover { transform:translateY(-2px); box-shadow:0 6px 10px rgba(0,0,0,0.35); }
+button:active { transform:translateY(1px); box-shadow:0 3px 5px rgba(0,0,0,0.3); }
+
+/* --- Screens --- */
+#home,#admin-login,#editor,#play-screen,#leaderboard-screen{display:none; flex-direction:column; align-items:center;}
+#home{display:flex;} #home h1{font-size:3em; color:#ffcc33; margin-bottom:20px;}
+
+/* --- Inputs --- */
+input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outline:none;}
+
+/* --- Editor --- */
+#editor-controls{margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px; justify-content:center; align-items:center;}
+#maze-container{display:grid; gap:1px; background: rgba(255,255,255,0.05); border-radius:10px; border:2px solid rgba(255,255,255,0.3); padding:2px;}
+.cell{width:25px;height:25px; display:flex; justify-content:center; align-items:center; font-weight:bold; font-size:0.8em; cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,0.15); border-radius:4px; transition:0.1s;}
+.cell.wall{background:#ff4444; box-shadow: inset 0 0 4px rgba(0,0,0,0.4);}
+.cell.start{background:#44ff44; color:#000;}
+.cell.end{background:#4444ff; color:#fff;}
+
+/* --- Play Screen --- */
+#maze-container-play{position:relative;}
+#player{width:25px;height:25px;background:#ffff00;position:absolute;transition:0.1s; z-index:10; border-radius:4px; box-shadow:0 0 10px yellow;}
+
+/* --- Server Time --- */
+#server-time{margin-top:10px;font-size:0.9em;color:#ccc;}
+
+/* --- Player Tracking (admin) --- */
+#player-tracking { margin-top:16px; width:320px; text-align:left; }
+#player-list { background: rgba(0,0,0,0.18); padding:10px; border-radius:8px; max-height:200px; overflow:auto; font-family:monospace; color:#e8e8e8; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+
+<!-- Home -->
+<div id="home" class="glass">
+  <h1>SuperMaze</h1>
+  <button id="play-btn">Play Maze</button>
+  <button id="admin-btn">Admin</button>
+  <button id="leaderboard-btn">Leaderboard</button>
+</div>
+
+<!-- Admin Login -->
+<div id="admin-login" class="glass">
+  <h2>Enter Admin Password</h2>
+  <input type="password" id="admin-pass" placeholder="Password">
+  <button id="login-btn">Login</button>
+  <button id="back-home1">Back</button>
+  <p id="login-error" style="color:red;"></p>
+</div>
+
+<!-- Editor (Admin) -->
+<div id="editor" class="glass">
+  <h2>Maze Editor</h2>
+  <div id="editor-controls">
+    <label>Grid Size:<input type="number" id="grid-size" min="5" max="50" value="10"></label>
+    <button id="apply-grid">Apply</button>
+    <button id="clear-maze">Clear</button>
+    <button id="save-maze">Save</button>
+    <button id="load-maze">Load</button>
+    <button id="play-maze-btn">Play Maze</button>
+    <button id="back-home2">Back</button>
+    <label>Home Title:<input type="text" id="home-title-input" placeholder="SuperMaze"></label>
+    <button id="save-title-btn">Update Title</button>
+  </div>
+
+  <div id="maze-container"></div>
+  <p>Click to toggle walls, shift+click for start/end.</p>
+  <div id="server-time">Server Time: --:--:--</div>
+
+  <!-- Admin: Text Player Tracking -->
+  <div id="player-tracking">
+    <h3 style="margin:0 0 8px 0;">Live Player Tracking (text)</h3>
+    <div id="player-list">{}</div>
+  </div>
+</div>
+
+<!-- Play Screen -->
+<div id="play-screen" class="glass">
+  <h2>Play Maze</h2>
+  <div id="maze-container-play"></div>
+  <button id="back-home3">Back</button>
+</div>
+
+<!-- Leaderboard Screen -->
+<div id="leaderboard-screen" class="glass">
+  <h2>Leaderboard</h2>
+  <ol id="leaderboard-list"></ol>
+  <button id="back-home4">Back</button>
+</div>
+
+<script>
+/* === Globals === */
+let gridSize=10, maze=[], startPos=null, endPos=null, playerPos={}, startTime=0;
+let username = null; // will be set when player starts playing (so admin can identify)
+const home=document.getElementById('home'), adminLogin=document.getElementById('admin-login'), editor=document.getElementById('editor'), playScreen=document.getElementById('play-screen'), leaderboardScreen=document.getElementById('leaderboard-screen');
+const mazeContainer=document.getElementById('maze-container'), mazeContainerPlay=document.getElementById('maze-container-play');
+const gridInput=document.getElementById('grid-size'), serverTime=document.getElementById('server-time');
+const homeTitle=document.querySelector('#home h1'), homeTitleInput=document.getElementById('home-title-input'), saveTitleBtn=document.getElementById('save-title-btn');
+const leaderboardList=document.getElementById('leaderboard-list');
+const playerListBox = document.getElementById('player-list');
+const PASSWORD='boorger123';
+
+/* === WebSocket client for live tracking === */
+let ws;
+function connectWS(){
+  try {
+    ws = new WebSocket(window.location.origin.replace(/^http/, 'ws'));
+  } catch(e){
+    // fallback
+    ws = new WebSocket('ws://localhost:3000');
+  }
+
+  ws.onopen = () => {
+    // announce if username already set
+    if (username) ws.send(JSON.stringify({ type: "join", username }));
+  };
+
+  ws.onmessage = (msg) => {
+    let data;
+    try { data = JSON.parse(msg.data); } catch(e){ return; }
+    if (data.type === "players") updateAdminTracking(data.players);
+  };
+
+  ws.onclose = () => { /* try reconnect after a bit */ setTimeout(connectWS, 1500); };
+  ws.onerror = () => { /* ignore */ };
+}
+connectWS();
+
+/* === Screen helper === */
+function showScreen(screen){ home.style.display='none'; adminLogin.style.display='none'; editor.style.display='none'; playScreen.style.display='none'; leaderboardScreen.style.display='none'; screen.style.display='flex'; }
+
+/* === Maze functions === */
+function createMazeGrid(size){
+  mazeContainer.innerHTML=''; maze=[]; mazeContainer.style.gridTemplateColumns=`repeat(${size},25px)`; mazeContainer.style.gridTemplateRows=`repeat(${size},25px)`;
+  for(let r=0;r<size;r++){ let row=[]; for(let c=0;c<size;c++){ const cell=document.createElement('div'); cell.classList.add('cell'); cell.dataset.row=r; cell.dataset.col=c; cell.addEventListener('click',toggleCell); mazeContainer.appendChild(cell); row.push('empty'); } maze.push(row); }
+  startPos=null; endPos=null;
+}
+
+function toggleCell(e){
+  const r=parseInt(this.dataset.row), c=parseInt(this.dataset.col);
+  if(e.shiftKey){
+    if(!startPos){ this.className='cell start'; maze[r][c]='start'; startPos={r,c}; }
+    else if(!endPos){ this.className='cell end'; maze[r][c]='end'; endPos={r,c}; }
+    else { alert('Start and End already set!'); }
+  } else {
+    if(maze[r][c]==='wall'){ this.className='cell'; maze[r][c]='empty'; }
+    else { this.className='cell wall'; maze[r][c]='wall'; }
+  }
+}
+
+function clearMaze(){ createMazeGrid(gridSize); }
+
+function saveMaze(){ if(!startPos||!endPos){ alert('Set Start and End first!'); return; } localStorage.setItem('savedMaze',JSON.stringify({maze,startPos,endPos,gridSize})); alert('Maze saved!'); }
+
+function loadMaze(){ const data=JSON.parse(localStorage.getItem('savedMaze')); if(!data){ alert('No maze saved!'); return; } gridSize=data.gridSize; gridInput.value=gridSize; createMazeGrid(gridSize); for(let r=0;r<gridSize;r++){ for(let c=0;c<gridSize;c++){ maze[r][c]=data.maze[r][c]; const cell=mazeContainer.querySelector(`[data-row='${r}'][data-col='${c}']`); cell.className='cell'; if(maze[r][c]==='wall') cell.classList.add('wall'); if(maze[r][c]==='start') cell.classList.add('start'); if(maze[r][c]==='end') cell.classList.add('end'); } } startPos=data.startPos; endPos=data.endPos; }
+
+/* === Admin Login handlers === */
+document.getElementById('admin-btn').onclick=()=>showScreen(adminLogin);
+document.getElementById('back-home1').onclick=()=>showScreen(home);
+document.getElementById('login-btn').onclick=()=>{ if(document.getElementById('admin-pass').value===PASSWORD){ showScreen(editor); createMazeGrid(gridSize); loadHomeTitle(); } else {document.getElementById('login-error').innerText='Wrong password!';} };
+
+/* === Editor controls === */
+document.getElementById('apply-grid').onclick=()=>{ const val=parseInt(gridInput.value); if(val>=5&&val<=50){ gridSize=val; createMazeGrid(gridSize); } else alert('Grid size 5–50'); };
+document.getElementById('clear-maze').onclick=clearMaze;
+document.getElementById('save-maze').onclick=saveMaze;
+document.getElementById('load-maze').onclick=loadMaze;
+document.getElementById('back-home2').onclick=()=>showScreen(home);
+document.getElementById('play-maze-btn').onclick=()=>startMazePlay();
+
+/* === Home title feature === */
+function loadHomeTitle(){ const savedTitle=localStorage.getItem('homeTitle'); if(savedTitle){homeTitle.innerText=savedTitle; homeTitleInput.value=savedTitle;} else homeTitleInput.value=homeTitle.innerText; }
+saveTitleBtn.onclick=()=>{ const newTitle=homeTitleInput.value.trim(); if(newTitle){homeTitle.innerText=newTitle; localStorage.setItem('homeTitle',newTitle); alert('Home title updated!'); } else alert('Title cannot be empty!'); }
+
+/* === Play Maze & movement (sends WS moves) === */
+function startMazePlay(){
+  if(!startPos || !endPos){ alert('Editor must have start and end set before playing.'); return; }
+
+  // ask for username if not set (so admin sees a name)
+  if(!username){
+    const u = prompt('Enter your player name (shown on admin panel):', 'Player' + Math.floor(Math.random()*9000+100));
+    username = (u && u.trim()) ? u.trim() : ('Player' + Math.floor(Math.random()*9000+100));
+    if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "join", username }));
+  }
+
+  showScreen(playScreen);
+  mazeContainerPlay.innerHTML=''; mazeContainerPlay.style.width=`${gridSize*25}px`; mazeContainerPlay.style.height=`${gridSize*25}px`; mazeContainerPlay.style.position='relative';
+
+  for(let r=0;r<gridSize;r++){ for(let c=0;c<gridSize;c++){ const div=document.createElement('div'); div.style.width='25px'; div.style.height='25px'; div.style.position='absolute'; div.style.left=`${c*25}px`; div.style.top=`${r*25}px`; div.style.boxSizing='border-box'; if(maze[r][c]==='wall') div.style.background='#ff4444'; else if(maze[r][c]==='start') div.style.background='#44ff44'; else if(maze[r][c]==='end') div.style.background='#4444ff'; else div.style.background='#2e2e3e'; mazeContainerPlay.appendChild(div); } }
+
+  playerPos={r:startPos.r,c:startPos.c};
+  const player=document.createElement('div'); player.id='player'; player.style.left=`${playerPos.c*25}px`; player.style.top=`${playerPos.r*25}px`; mazeContainerPlay.appendChild(player);
+  startTime=Date.now();
+
+  function sendMove(x,y){
+    if(!ws || ws.readyState !== WebSocket.OPEN) return;
+    try{ ws.send(JSON.stringify({ type: "move", x, y })); }catch(e){}
+  }
+
+  // announce initial position
+  sendMove(playerPos.c, playerPos.r);
+
+  function movePlayer(e){
+    let newR=playerPos.r, newC=playerPos.c;
+    if(e.key==='w') newR--; if(e.key==='s') newR++; if(e.key==='a') newC--; if(e.key==='d') newC++;
+    if(newR<0||newR>=gridSize||newC<0||newC>=gridSize) return;
+    if(maze[newR][newC]==='wall') return;
+    playerPos={r:newR,c:newC};
+    player.style.top=`${playerPos.r*25}px`; player.style.left=`${playerPos.c*25}px`;
+    sendMove(playerPos.c, playerPos.r);
+
+    if(playerPos.r===endPos.r && playerPos.c===endPos.c){
+      const endTime=(Date.now()-startTime)/1000;
+      alert(`You finished in ${endTime.toFixed(2)}s!`);
+      const name = username || prompt('Enter name for leaderboard:', 'Player');
+      if(name){
+        fetch('/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,time:endTime})})
+          .then(()=> showLeaderboard() )
+          .catch(()=> showLeaderboard());
+      }
+      document.removeEventListener('keydown', movePlayer);
+    }
+  }
+
+  document.addEventListener('keydown', movePlayer);
+  document.getElementById('back-home3').onclick=()=>{ showScreen(home); document.removeEventListener('keydown', movePlayer); }
+}
+
+/* === Home Play button (load saved maze) === */
+document.getElementById('play-btn').onclick=()=>{ const data=JSON.parse(localStorage.getItem('savedMaze')); if(!data){ alert('No maze saved!'); return; } gridSize=data.gridSize; maze=data.maze; startPos=data.startPos; endPos=data.endPos; startMazePlay(); }
+
+/* === Leaderboard functions === */
+function showLeaderboard(){
+  showScreen(leaderboardScreen);
+  fetch('/leaderboard').then(res=>res.json()).then(data=>{
+    data.sort((a,b)=>a.time-b.time);
+    leaderboardList.innerHTML='';
+    data.forEach(entry=>{ const li=document.createElement('li'); li.textContent=`${entry.name} - ${entry.time.toFixed(2)}s`; leaderboardList.appendChild(li); });
+  }).catch(()=>{ leaderboardList.innerHTML='<li>Failed to load</li>'; });
+}
+document.getElementById('leaderboard-btn').onclick=()=>showLeaderboard();
+document.getElementById('back-home4').onclick=()=>showScreen(home);
+
+/* === Admin: update tracking text box === */
+function updateAdminTracking(playersObj){
+  // playersObj is { id: { username, x, y, lastSeen }, ... }
+  const lines = [];
+  for(const [id, p] of Object.entries(playersObj)){
+    const name = p.username || 'Unknown';
+    lines.push(`${name} → X:${p.x} Y:${p.y} (id:${id})`);
+  }
+  playerListBox.innerText = lines.length ? lines.join('\n') : '{}';
+}
+
+/* === Server time === */
+setInterval(()=>{ serverTime.innerText=`Server Time: ${new Date().toLocaleTimeString()}`; },1000);
+
+/* === Init create default grid on load === */
+window.addEventListener('load', ()=>{ createMazeGrid(gridSize); loadHomeTitle(); });
+
+</script>
+</body>
+</html>
