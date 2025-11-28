@@ -2,19 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SuperMaze - Glossy Aero Edition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuperMaze - Full Admin & Dashboard</title>
 <style>
 /* --- General Styles --- */
 body { margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:linear-gradient(135deg,#1a1a2e,#162447); color:#f0f0f5;
-  display:flex; justify-content:center; align-items:center; height:100vh; }
+  display:flex; justify-content:center; align-items:flex-start; min-height:100vh; padding:20px; }
 
 /* --- Glass Panels --- */
-.glass { backdrop-filter:blur(15px) saturate(180%);
+.glass { -webkit-backdrop-filter:blur(15px) saturate(180%);
+  backdrop-filter:blur(15px) saturate(180%);
   background-color: rgba(255,255,255,0.08); border-radius:20px;
-  padding:30px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  border:1px solid rgba(255,255,255,0.18); transition:all 0.3s ease; }
+  padding:20px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  border:1px solid rgba(255,255,255,0.18); transition:all 0.3s ease; margin-bottom:20px; }
 
 /* --- Buttons --- */
 button { padding:10px 20px; margin:5px; border:none; border-radius:12px;
@@ -24,8 +25,9 @@ button:hover { transform:translateY(-2px); box-shadow:0 6px 10px rgba(0,0,0,0.35
 button:active { transform:translateY(1px); box-shadow:0 3px 5px rgba(0,0,0,0.3); }
 
 /* --- Screens --- */
-#home,#admin-login,#editor,#play-screen,#leaderboard-screen{display:none; flex-direction:column; align-items:center;}
-#home{display:flex;} #home h1{font-size:3em; color:#ffcc33; margin-bottom:20px;}
+#home,#admin-login,#editor,#play-screen,#leaderboard-screen{display:none; flex-direction:column; align-items:center; width:100%;}
+#home{display:flex;} 
+#home h1{font-size:3em; color:#ffcc33; margin-bottom:20px;}
 
 /* --- Inputs --- */
 input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outline:none;}
@@ -33,7 +35,7 @@ input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outlin
 /* --- Editor --- */
 #editor-controls{margin-bottom:10px; display:flex; flex-wrap:wrap; gap:5px; justify-content:center; align-items:center;}
 #maze-container{display:grid; gap:1px; background: rgba(255,255,255,0.05); border-radius:10px; border:2px solid rgba(255,255,255,0.3); padding:2px;}
-.cell{width:25px;height:25px; display:flex; justify-content:center; align-items:center; font-weight:bold; font-size:0.8em; cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,0.15); border-radius:4px; transition:0.1s;}
+.cell{width:25px;height:25px; display:flex; justify-content:center; align-items:center; font-weight:bold; font-size:0.8em; cursor:pointer; -webkit-user-select:none; user-select:none; border:1px solid rgba(255,255,255,0.15); border-radius:4px; transition:0.1s;}
 .cell.wall{background:#ff4444; box-shadow: inset 0 0 4px rgba(0,0,0,0.4);}
 .cell.start{background:#44ff44; color:#000;}
 .cell.end{background:#4444ff; color:#fff;}
@@ -46,8 +48,18 @@ input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outlin
 #server-time{margin-top:10px;font-size:0.9em;color:#ccc;}
 
 /* --- Player Tracking (admin) --- */
-#player-tracking { margin-top:16px; width:320px; text-align:left; }
-#player-list { background: rgba(0,0,0,0.18); padding:10px; border-radius:8px; max-height:200px; overflow:auto; font-family:monospace; color:#e8e8e8; white-space:pre-wrap; }
+#player-tracking, #server-dashboard { margin-top:16px; width:100%; text-align:left; }
+#player-list, .server-card { background: rgba(0,0,0,0.18); padding:10px; border-radius:8px; max-height:200px; overflow:auto; font-family:monospace; color:#e8e8e8; white-space:pre-wrap; margin-bottom:10px;}
+.dashboard-cards { display:flex; flex-wrap:wrap; gap:10px; }
+
+/* --- Server Card --- */
+.server-card { flex:1 1 200px; display:flex; flex-direction:column; padding:10px; }
+.server-card h4{margin:0 0 5px 0;}
+.server-card .status{padding:2px 6px; border-radius:6px; font-weight:bold; margin-bottom:5px;}
+.status-online{background:#2ecc71;}
+.status-offline{background:#e74c3c;}
+.server-card ul{list-style:none;padding:0;margin:0; max-height:120px; overflow:auto;}
+.server-card ul li{border-bottom:1px solid rgba(255,255,255,0.1); padding:2px 0; font-size:0.9em;}
 </style>
 </head>
 <body>
@@ -88,10 +100,16 @@ input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outlin
   <p>Click to toggle walls, shift+click for start/end.</p>
   <div id="server-time">Server Time: --:--:--</div>
 
-  <!-- Admin: Text Player Tracking -->
+  <!-- Admin: Live Player Tracking -->
   <div id="player-tracking">
-    <h3 style="margin:0 0 8px 0;">Live Player Tracking (text)</h3>
+    <h3>Live Player Tracking</h3>
     <div id="player-list">{}</div>
+  </div>
+
+  <!-- Admin: Server Dashboard -->
+  <div id="server-dashboard">
+    <h3>Server Dashboard</h3>
+    <div class="dashboard-cards" id="dashboard-cards"></div>
   </div>
 </div>
 
@@ -112,43 +130,40 @@ input{padding:10px;margin:5px;border-radius:8px;border:none;font-size:1em;outlin
 <script>
 /* === Globals === */
 let gridSize=10, maze=[], startPos=null, endPos=null, playerPos={}, startTime=0;
-let username = null; // will be set when player starts playing (so admin can identify)
+let username = null;
 const home=document.getElementById('home'), adminLogin=document.getElementById('admin-login'), editor=document.getElementById('editor'), playScreen=document.getElementById('play-screen'), leaderboardScreen=document.getElementById('leaderboard-screen');
 const mazeContainer=document.getElementById('maze-container'), mazeContainerPlay=document.getElementById('maze-container-play');
 const gridInput=document.getElementById('grid-size'), serverTime=document.getElementById('server-time');
 const homeTitle=document.querySelector('#home h1'), homeTitleInput=document.getElementById('home-title-input'), saveTitleBtn=document.getElementById('save-title-btn');
 const leaderboardList=document.getElementById('leaderboard-list');
 const playerListBox = document.getElementById('player-list');
+const dashboardCards = document.getElementById('dashboard-cards');
 const PASSWORD='boorger123';
 
 /* === WebSocket client for live tracking === */
 let ws;
 function connectWS(){
-  try {
-    ws = new WebSocket(window.location.origin.replace(/^http/, 'ws'));
-  } catch(e){
-    // fallback
-    ws = new WebSocket('ws://localhost:3000');
-  }
+  try { ws = new WebSocket(window.location.origin.replace(/^http/, 'ws')); }
+  catch(e){ ws = new WebSocket('ws://localhost:3000'); }
 
-  ws.onopen = () => {
-    // announce if username already set
-    if (username) ws.send(JSON.stringify({ type: "join", username }));
-  };
-
+  ws.onopen = () => { if(username) ws.send(JSON.stringify({ type: "join", username })); };
   ws.onmessage = (msg) => {
     let data;
     try { data = JSON.parse(msg.data); } catch(e){ return; }
     if (data.type === "players") updateAdminTracking(data.players);
+    if (data.type === "servers") updateServerDashboard(data.servers);
   };
-
-  ws.onclose = () => { /* try reconnect after a bit */ setTimeout(connectWS, 1500); };
-  ws.onerror = () => { /* ignore */ };
+  ws.onclose = () => { setTimeout(connectWS, 1500); };
+  ws.onerror = () => {};
 }
 connectWS();
 
 /* === Screen helper === */
-function showScreen(screen){ home.style.display='none'; adminLogin.style.display='none'; editor.style.display='none'; playScreen.style.display='none'; leaderboardScreen.style.display='none'; screen.style.display='flex'; }
+function showScreen(screen){ 
+  home.style.display='none'; adminLogin.style.display='none'; editor.style.display='none'; 
+  playScreen.style.display='none'; leaderboardScreen.style.display='none'; 
+  screen.style.display='flex'; 
+}
 
 /* === Maze functions === */
 function createMazeGrid(size){
@@ -170,9 +185,7 @@ function toggleCell(e){
 }
 
 function clearMaze(){ createMazeGrid(gridSize); }
-
 function saveMaze(){ if(!startPos||!endPos){ alert('Set Start and End first!'); return; } localStorage.setItem('savedMaze',JSON.stringify({maze,startPos,endPos,gridSize})); alert('Maze saved!'); }
-
 function loadMaze(){ const data=JSON.parse(localStorage.getItem('savedMaze')); if(!data){ alert('No maze saved!'); return; } gridSize=data.gridSize; gridInput.value=gridSize; createMazeGrid(gridSize); for(let r=0;r<gridSize;r++){ for(let c=0;c<gridSize;c++){ maze[r][c]=data.maze[r][c]; const cell=mazeContainer.querySelector(`[data-row='${r}'][data-col='${c}']`); cell.className='cell'; if(maze[r][c]==='wall') cell.classList.add('wall'); if(maze[r][c]==='start') cell.classList.add('start'); if(maze[r][c]==='end') cell.classList.add('end'); } } startPos=data.startPos; endPos=data.endPos; }
 
 /* === Admin Login handlers === */
@@ -192,13 +205,11 @@ document.getElementById('play-maze-btn').onclick=()=>startMazePlay();
 function loadHomeTitle(){ const savedTitle=localStorage.getItem('homeTitle'); if(savedTitle){homeTitle.innerText=savedTitle; homeTitleInput.value=savedTitle;} else homeTitleInput.value=homeTitle.innerText; }
 saveTitleBtn.onclick=()=>{ const newTitle=homeTitleInput.value.trim(); if(newTitle){homeTitle.innerText=newTitle; localStorage.setItem('homeTitle',newTitle); alert('Home title updated!'); } else alert('Title cannot be empty!'); }
 
-/* === Play Maze & movement (sends WS moves) === */
+/* === Play Maze & movement === */
 function startMazePlay(){
   if(!startPos || !endPos){ alert('Editor must have start and end set before playing.'); return; }
-
-  // ask for username if not set (so admin sees a name)
   if(!username){
-    const u = prompt('Enter your player name (shown on admin panel):', 'Player' + Math.floor(Math.random()*9000+100));
+    const u = prompt('Enter your player name:', 'Player' + Math.floor(Math.random()*9000+100));
     username = (u && u.trim()) ? u.trim() : ('Player' + Math.floor(Math.random()*9000+100));
     if(ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: "join", username }));
   }
@@ -212,12 +223,7 @@ function startMazePlay(){
   const player=document.createElement('div'); player.id='player'; player.style.left=`${playerPos.c*25}px`; player.style.top=`${playerPos.r*25}px`; mazeContainerPlay.appendChild(player);
   startTime=Date.now();
 
-  function sendMove(x,y){
-    if(!ws || ws.readyState !== WebSocket.OPEN) return;
-    try{ ws.send(JSON.stringify({ type: "move", x, y })); }catch(e){}
-  }
-
-  // announce initial position
+  function sendMove(x,y){ if(ws && ws.readyState===WebSocket.OPEN) ws.send(JSON.stringify({ type:"move", x, y })); }
   sendMove(playerPos.c, playerPos.r);
 
   function movePlayer(e){
@@ -235,18 +241,16 @@ function startMazePlay(){
       const name = username || prompt('Enter name for leaderboard:', 'Player');
       if(name){
         fetch('/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,time:endTime})})
-          .then(()=> showLeaderboard() )
-          .catch(()=> showLeaderboard());
+          .then(()=> showLeaderboard() ).catch(()=> showLeaderboard());
       }
       document.removeEventListener('keydown', movePlayer);
     }
   }
-
   document.addEventListener('keydown', movePlayer);
   document.getElementById('back-home3').onclick=()=>{ showScreen(home); document.removeEventListener('keydown', movePlayer); }
 }
 
-/* === Home Play button (load saved maze) === */
+/* === Home Play button === */
 document.getElementById('play-btn').onclick=()=>{ const data=JSON.parse(localStorage.getItem('savedMaze')); if(!data){ alert('No maze saved!'); return; } gridSize=data.gridSize; maze=data.maze; startPos=data.startPos; endPos=data.endPos; startMazePlay(); }
 
 /* === Leaderboard functions === */
@@ -261,15 +265,31 @@ function showLeaderboard(){
 document.getElementById('leaderboard-btn').onclick=()=>showLeaderboard();
 document.getElementById('back-home4').onclick=()=>showScreen(home);
 
-/* === Admin: update tracking text box === */
+/* === Admin: update tracking === */
 function updateAdminTracking(playersObj){
-  // playersObj is { id: { username, x, y, lastSeen }, ... }
   const lines = [];
   for(const [id, p] of Object.entries(playersObj)){
     const name = p.username || 'Unknown';
     lines.push(`${name} → X:${p.x} Y:${p.y} (id:${id})`);
   }
   playerListBox.innerText = lines.length ? lines.join('\n') : '{}';
+}
+
+/* === Admin: server dashboard === */
+function updateServerDashboard(serversObj){
+  dashboardCards.innerHTML='';
+  for(const [id, server] of Object.entries(serversObj)){
+    const card = document.createElement('div'); card.classList.add('server-card','glass');
+    const statusSpan = document.createElement('span'); statusSpan.classList.add('status'); 
+    statusSpan.classList.add(server.online?'status-online':'status-offline');
+    statusSpan.innerText = server.online?'ONLINE':'OFFLINE';
+    card.innerHTML = `<h4>${server.name}</h4>`;
+    card.appendChild(statusSpan);
+    const ul = document.createElement('ul');
+    for(const p of server.players){ const li = document.createElement('li'); li.innerText=`${p.username} (X:${p.x} Y:${p.y})`; ul.appendChild(li); }
+    card.appendChild(ul);
+    dashboardCards.appendChild(card);
+  }
 }
 
 /* === Server time === */
