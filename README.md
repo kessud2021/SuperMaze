@@ -6,6 +6,8 @@
 ![GitHub License](https://img.shields.io/github/license/kessud2021/SuperMaze)
 
 
+https://kessud2021.github.io/supermaze-website/
+
 
 
 **SuperMaze** is a maze game built with **HTML, CSS, and JavaScript**, featuring both singleplayer and multiplayer modes.  
