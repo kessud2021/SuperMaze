@@ -1,4 +1,4 @@
-<!-- SuperMaze v1.3.1 - Made by VSSCO -->
+<!-- SuperMaze v1.4.0 - Full rebuild with API stats and victory modal -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,41 +6,32 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title id="page-title">SuperMaze</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
 <style>
-/* --- Layout --- */
-* { box-sizing:border-box; }
-html, body { height:100%; margin:0; font-family:'Segoe UI',sans-serif; }
-body { display:flex; justify-content:center; align-items:center; transition:background .3s ease; min-height:100vh; }
-
-/* Glass container */
-.connect-container { display:flex; justify-content:center; align-items:center; height:100%; }
-.connect-card { width:380px; border-radius:14px; box-shadow:0 12px 36px rgba(2,6,23,.36); backdrop-filter:blur(8px); background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06); }
-
-/* Maze area */
-.maze-container { width:100%; height:100vh; position:relative; display:flex; justify-content:center; align-items:center; background:#f5f5f5; overflow:hidden; }
-.maze-grid { display:grid; gap:2px; }
-.cell { width:25px; height:25px; border-radius:6px; background:#fff; transition:background .06s; box-sizing:border-box; }
-.cell.wall { background:#333; }
-.cell.player { background:#e74c3c; box-shadow:0 0 6px rgba(231,76,60,.7) inset; }
-.cell.end { background:#2ecc71; box-shadow:0 0 6px rgba(46,204,113,.6) inset; }
-.cell.ghost { background: rgba(0,200,255,0.6); }
-
-/* HUD */
-.keystrokes { position:absolute; bottom:18px; left:18px; display:flex; gap:6px; flex-direction:column; color:#fff; font-weight:700; text-shadow:0 0 5px #000; }
-.keystrokes span { width:34px; height:34px; text-align:center; line-height:34px; border-radius:6px; border:1px solid rgba(255,255,255,.9); background:rgba(0,0,0,.55); }
-.stopwatch { position:absolute; top:14px; right:14px; padding:6px 10px; border-radius:8px; background:rgba(0,0,0,.7); color:#fff; font-size:18px; }
-.back-btn { position:absolute; top:14px; left:14px; }
-
-/* small responsiveness */
-@media (max-width:480px) { .connect-card { width:92%; } }
-
-/* Join screen */
-.join-card .form-control { background: rgba(255,255,255,0.04); color:inherit; border-radius:10px; border:1px solid rgba(255,255,255,0.06); }
-.join-actions { display:flex; gap:8px; margin-top:10px; }
-.status-pill { padding:6px 10px; border-radius:999px; font-weight:700; font-size:13px; display:inline-flex; align-items:center; gap:8px; }
-.status-online { background: rgba(16,185,129,0.14); color:#10b981; border:1px solid rgba(16,185,129,0.22); }
-.status-offline { background: rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.18); }
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;font-family:'Segoe UI',sans-serif;}
+  body{display:flex;justify-content:center;align-items:center;transition:background .3s ease;min-height:100vh;}
+  .connect-container{display:flex;justify-content:center;align-items:center;height:100%;}
+  .connect-card{width:380px;border-radius:14px;box-shadow:0 12px 36px rgba(2,6,23,.36);backdrop-filter: blur(8px); background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06);}
+  .maze-container{width:100%;height:100vh;position:relative;display:flex;justify-content:center;align-items:center;background:#f5f5f5;overflow:hidden;}
+  .maze-grid{display:grid;gap:2px;}
+  .cell{width:25px;height:25px;border-radius:6px;background:#fff;transition: background .06s;box-sizing:border-box;}
+  .cell.wall{background:#333;}
+  .cell.player{background:#e74c3c;box-shadow:0 0 6px rgba(231,76,60,.7) inset;}
+  .cell.end{background:#2ecc71;box-shadow:0 0 6px rgba(46,204,113,.6) inset;}
+  .cell.ghost{background: rgba(0,200,255,0.6);}
+  .keystrokes{position:absolute;bottom:18px;left:18px;display:flex;gap:6px;flex-direction:column;color:#fff;font-weight:700;text-shadow:0 0 5px #000;}
+  .keystrokes span{width:34px;height:34px;text-align:center;line-height:34px;border-radius:6px;border:1px solid rgba(255,255,255,.9);background:rgba(0,0,0,.55);}
+  .stopwatch{position:absolute;top:14px;right:14px;padding:6px 10px;border-radius:8px;background:rgba(0,0,0,.7);color:#fff;font-size:18px;}
+  .back-btn{position:absolute;top:14px;left:14px;}
+  @media(max-width:480px){.connect-card{width:92%;}}
+  .title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .title-left{display:flex;align-items:center;gap:10px;}
+  .site-title{font-size:20px;font-weight:700;margin:0;}
+  .status-pill{padding:6px 10px;border-radius:999px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:8px;}
+  .status-online{background: rgba(16,185,129,0.14); color:#10b981; border:1px solid rgba(16,185,129,0.22);}
+  .status-offline{background: rgba(239,68,68,0.12); color:#ef4444; border:1px solid rgba(239,68,68,0.18);}
+  .join-card .form-control{background: rgba(255,255,255,0.04); color:inherit; border-radius:10px; border:1px solid rgba(255,255,255,0.06);}
+  .join-actions{display:flex;gap:8px;margin-top:10px;}
 </style>
 </head>
 <body class="theme-light">
@@ -48,33 +39,33 @@ body { display:flex; justify-content:center; align-items:center; transition:back
 <!-- USERNAME SCREEN -->
 <div id="username-screen" class="connect-container">
   <div class="card connect-card text-center p-3">
-    <h4 class="mb-3">🌀 SuperMaze</h4>
-    <small class="d-block mb-2 text-muted">Enter your username</small>
-    <input id="username-input" class="form-control mb-2" placeholder="Your username"/>
+    <h4>🌀 SuperMaze</h4>
+    <small>Enter your username to start</small>
+    <input id="username-input" class="form-control my-2" placeholder="Username"/>
     <button id="continue-btn" class="btn btn-primary w-100">Continue</button>
-    <small id="token-info" class="d-block mt-2 text-muted"></small>
   </div>
 </div>
 
 <!-- MAIN MENU -->
-<div id="main-menu" class="connect-container d-none">
-  <div class="card connect-card p-3">
+<div id="connect-screen" class="connect-container d-none">
+  <div class="card connect-card p-3 text-center">
     <h4>🌀 SuperMaze</h4>
-    <div id="xp-display" class="mb-2 text-muted"></div>
-    <div id="runs-display" class="mb-2 text-muted"></div>
+    <small id="user-stats" class="d-block mb-2">XP: 0 | Runs: 0</small>
+    <button id="single-btn" class="btn btn-success w-100 my-1">Singleplayer</button>
+    <button id="open-join-btn" class="btn btn-warning w-100 my-1">Multiplayer</button>
 
-    <button id="single-btn" class="btn btn-success w-100 mb-2">Singleplayer</button>
-    <button id="open-join-btn" class="btn btn-warning w-100 mb-2">Multiplayer Join</button>
-    
-    <div id="join-card" class="join-card d-none mt-2">
-      <input id="server-ip-input" class="form-control mb-2" placeholder="Server IP (example.com)"/>
-      <input id="server-port-input" class="form-control mb-2" placeholder="Port (default 3000)"/>
+    <div id="join-card" class="d-none mt-2">
+      <input id="server-ip-input" class="form-control mb-1" placeholder="Server IP"/>
+      <input id="server-port-input" class="form-control mb-1" placeholder="Port (default 3000)"/>
       <div class="join-actions">
+        <button id="check-server-btn" class="btn btn-ghost flex-fill">Check</button>
         <button id="connect-server-btn" class="btn btn-primary flex-fill">Connect</button>
       </div>
+      <small class="text-muted">Enter server IP and port to join.</small>
     </div>
 
-    <button id="leaderboard-btn" class="btn btn-outline-secondary w-100 mt-2">Leaderboard</button>
+    <button id="leaderboard-btn" class="btn btn-outline-secondary w-100 my-1">Leaderboard</button>
+    <button id="replay-list-btn" class="btn btn-outline-primary w-100 my-1">Saved Runs</button>
   </div>
 </div>
 
@@ -86,227 +77,92 @@ body { display:flex; justify-content:center; align-items:center; transition:back
   <button id="back-btn" class="btn btn-secondary back-btn">Exit</button>
 </div>
 
+<!-- VICTORY MODAL -->
+<div id="victory-modal" class="d-none position-absolute" style="inset:0;display:flex;justify-content:center;align-items:center;background:rgba(0,0,0,0.8);z-index:9999;">
+  <div class="card p-3 text-center">
+    <h2 class="text-warning">🏆 Victory!</h2>
+    <p id="victory-time">Time: 00:00.000</p>
+    <button id="victory-replay-btn" class="btn btn-primary my-1">Replay Run</button>
+    <button id="victory-menu-btn" class="btn btn-secondary my-1">Main Menu</button>
+  </div>
+</div>
+
 <script>
-/* --- Globals --- */
-const usernameScreen = document.getElementById("username-screen");
-const mainMenu = document.getElementById("main-menu");
-const usernameInput = document.getElementById("username-input");
-const continueBtn = document.getElementById("continue-btn");
-const tokenInfo = document.getElementById("token-info");
+const usernameScreen = document.getElementById('username-screen');
+const connectScreen = document.getElementById('connect-screen');
+const mazeScreen = document.getElementById('maze-screen');
+const victoryModal = document.getElementById('victory-modal');
+const victoryTime = document.getElementById('victory-time');
+const victoryReplayBtn = document.getElementById('victory-replay-btn');
+const victoryMenuBtn = document.getElementById('victory-menu-btn');
 
-const mazeScreen = document.getElementById("maze-screen");
-const mazeGrid = document.getElementById("maze-grid");
-const keystrokesDiv = document.getElementById("keystrokes");
-const stopwatchDisplay = document.getElementById("stopwatch");
+const usernameInput = document.getElementById('username-input');
+const continueBtn = document.getElementById('continue-btn');
+const singleBtn = document.getElementById('single-btn');
+const openJoinBtn = document.getElementById('open-join-btn');
+const joinCard = document.getElementById('join-card');
+const serverIpInput = document.getElementById('server-ip-input');
+const serverPortInput = document.getElementById('server-port-input');
+const checkServerBtn = document.getElementById('check-server-btn');
+const connectServerBtn = document.getElementById('connect-server-btn');
+const userStats = document.getElementById('user-stats');
 
-const singleBtn = document.getElementById("single-btn");
-const backBtn = document.getElementById("back-btn");
+const mazeGrid = document.getElementById('maze-grid');
+const keystrokesDiv = document.getElementById('keystrokes');
+const stopwatchDisplay = document.getElementById('stopwatch');
+const backBtn = document.getElementById('back-btn');
 
-const openJoinBtn = document.getElementById("open-join-btn");
-const joinCard = document.getElementById("join-card");
-const serverIpInput = document.getElementById("server-ip-input");
-const serverPortInput = document.getElementById("server-port-input");
-const connectServerBtn = document.getElementById("connect-server-btn");
+const size=21; const cellPx=25;
+let maze=[], player={x:1,y:1}, endCell={x:size-2,y:size-2}, moves=[], startTime=null, timerInterval=null, gameWon=false;
+let keys={w:false,a:false,s:false,d:false,ArrowUp:false,ArrowDown:false,ArrowLeft:false,ArrowRight:false};
+let username=localStorage.getItem('maze_username')||'', token=localStorage.getItem('maze_token')||'', stats={xp:0,runs:0,runsData:[]};
 
-const xpDisplay = document.getElementById("xp-display");
-const runsDisplay = document.getElementById("runs-display");
-const leaderboardBtn = document.getElementById("leaderboard-btn");
+function formatTime(ms){if(!ms)return "00:00.000"; const s=Math.floor(ms/1000); const m=Math.floor(s/60); const sec=s%60; const msr=ms%1000; return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(msr).padStart(3,'0')}`;}
 
-/* --- Maze Settings --- */
-const size = 21;
-const cellPx = 25;
-let maze = [], player = {x:1,y:1}, endCell = {x:size-2,y:size-2};
-let moves = [], gameWon = false, startTime = null, timerInterval = null;
-let xp = 0, runs = [];
+function updateStatsDisplay(){userStats.textContent=`XP: ${stats.xp} | Runs: ${stats.runs}`;}
 
-/* --- Keys --- */
-const keys = { w:false,a:false,s:false,d:false,ArrowUp:false,ArrowDown:false,ArrowLeft:false,ArrowRight:false };
+async function fetchNewToken(){try{const res=await fetch('https://supermaze-auth.onrender.com/api/new-token'); const data=await res.json(); token=data.token; stats=data.stats; localStorage.setItem('maze_token',token); updateStatsDisplay();}catch(e){alert('Failed to get token from server'); console.error(e);}}
 
-/* --- Token --- */
-let token = localStorage.getItem("supermaze_token");
+async function updateStats(newXP, runData){try{if(!token){await fetchNewToken();} const res=await fetch(`https://supermaze-auth.onrender.com/api/stats/${token}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({xp:newXP,completed:stats.runs+1,run:runData})}); const d=await res.json(); stats=d.stats; updateStatsDisplay();}catch(e){console.error(e);}}
 
-/* --- Utility --- */
-function now(){return performance.now();}
-function formatTime(ms){
-  if(ms==null) return "00:00.000";
-  const totalSec = ms/1000, min = Math.floor(totalSec/60), sec = Math.floor(totalSec%60), msRem=Math.floor(ms%1000);
-  return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(msRem).padStart(3,'0')}`;
-}
-
-/* --- Token fetch --- */
-async function assignToken(username){
-  try{
-    const resp = await fetch("https://supermaze-auth.onrender.com/api/new-token");
-    const data = await resp.json();
-    token = data.token;
-    localStorage.setItem("supermaze_token", token);
-    xp = data.stats.xp;
-    runs = data.stats.runs || [];
-    tokenInfo.textContent = `Token assigned: ${token}`;
-  }catch(e){
-    tokenInfo.textContent = `Error fetching token.`;
-    console.error(e);
-  }
-}
-
-/* --- Username Continue --- */
-continueBtn.onclick = async ()=>{
-  const name = usernameInput.value.trim();
-  if(!name) return alert("Enter a username!");
-  localStorage.setItem("supermaze_username", name);
-  usernameScreen.classList.add("d-none");
-  mainMenu.classList.remove("d-none");
-
-  if(!token) await assignToken(name);
-  updateXPRuns();
-};
-
-/* --- Update XP/Runs --- */
-function updateXPRuns(){
-  xpDisplay.textContent = `XP: ${xp}`;
-  runsDisplay.textContent = `Runs: ${runs.length}`;
-}
-
-/* --- Multiplayer Join --- */
-openJoinBtn.onclick = ()=>{
-  joinCard.classList.toggle("d-none");
-  if(!serverPortInput.value) serverPortInput.value = "3000";
-};
-
-connectServerBtn.onclick = ()=>{
-  const host = serverIpInput.value.trim();
-  const port = serverPortInput.value.trim() || "3000";
-  if(!host) return alert("Enter server IP");
-  window.location.href = `http://${host}:${port}`;
-};
-
-/* --- Maze Generator --- */
 function initWallGrid(){maze=new Array(size); for(let y=0;y<size;y++){maze[y]=new Array(size).fill(1);}}
-function carveMaze(){
-  initWallGrid();
-  const stack = [{x:1,y:1}];
-  maze[1][1]=0;
-  const dirs=[{dx:0,dy:-2},{dx:2,dy:0},{dx:0,dy:2},{dx:-2,dy:0}];
-  while(stack.length){
-    const cur=stack[stack.length-1];
-    const neighbors=[];
-    for(const d of dirs){
-      const nx=cur.x+d.dx, ny=cur.y+d.dy;
-      if(nx>0&&nx<size-1&&ny>0&&ny<size-1&&maze[ny][nx]===1) neighbors.push({x:nx,y:ny,via:d});
-    }
-    if(!neighbors.length){stack.pop(); continue;}
-    const n=neighbors[Math.floor(Math.random()*neighbors.length)];
-    maze[cur.y+n.via.dy/2][cur.x+n.via.dx/2]=0;
-    maze[n.y][n.x]=0;
-    stack.push({x:n.x,y:n.y});
-  }
-}
-function placePlayerAndEnd(){
-  function randomEmpty(){let a=0; while(a++<10000){const x=1+Math.floor(Math.random()*(size-2)),y=1+Math.floor(Math.random()*(size-2)); if(maze[y][x]===0) return {x,y};} return {x:1,y:1};}
-  player=randomEmpty(); endCell=randomEmpty();
-  let tries=0;
-  while(Math.abs(player.x-endCell.x)+Math.abs(player.y-endCell.y)<Math.floor(size/2)&&tries++<2000) endCell=randomEmpty();
-}
+function carveMaze(){initWallGrid(); const stack=[]; const start={x:1,y:1}; maze[start.y][start.x]=0; stack.push(start); const dirs=[{dx:0,dy:-2},{dx:2,dy:0},{dx:0,dy:2},{dx:-2,dy:0}]; while(stack.length){const cur=stack[stack.length-1]; const neighbors=[]; for(const d of dirs){const nx=cur.x+d.dx; const ny=cur.y+d.dy;if(ny>0 && ny<size-1 && nx>0 && nx<size-1 && maze[ny][nx]===1) neighbors.push({x:nx,y:ny,via:d});} if(neighbors.length===0){stack.pop();}else{const n=neighbors[Math.floor(Math.random()*neighbors.length)]; const bx=cur.x+n.via.dx/2; const by=cur.y+n.via.dy/2; maze[by][bx]=0; maze[n.y][n.x]=0; stack.push({x:n.x,y:n.y});}}}
+function placePlayerAndEnd(){function randomEmpty(){let attempts=0;while(attempts++<10000){const x=1+Math.floor(Math.random()*(size-2));const y=1+Math.floor(Math.random()*(size-2));if(maze[y][x]===0)return{x,y};}return{x:1,y:1;}} player=randomEmpty(); endCell=randomEmpty(); let tries=0; while((Math.abs(player.x-endCell.x)+Math.abs(player.y-endCell.y))<Math.floor(size/2)&&tries++<2000) endCell=randomEmpty();}
 function generateMaze(){carveMaze(); placePlayerAndEnd();}
+function renderMaze(ghostPos=null){mazeGrid.innerHTML=''; mazeGrid.style.gridTemplateColumns=`repeat(${size}, ${cellPx}px)`; mazeGrid.style.gridTemplateRows=`repeat(${size}, ${cellPx}px)`; const frag=document.createDocumentFragment(); for(let y=0;y<size;y++){for(let x=0;x<size;x++){const d=document.createElement('div'); d.className='cell'; if(maze[y][x]===1)d.classList.add('wall'); if(x===player.x&&y===player.y&&!(ghostPos&&ghostPos.x===x&&ghostPos.y===y))d.classList.add('player'); if(x===endCell.x&&y===endCell.y)d.classList.add('end'); if(ghostPos&&ghostPos.x===x&&ghostPos.y===y)d.classList.add('ghost'); frag.appendChild(d);}} mazeGrid.appendChild(frag);}
 
-/* --- Render --- */
-function renderMaze(ghostPos=null){
-  mazeGrid.innerHTML="";
-  mazeGrid.style.gridTemplateColumns=`repeat(${size},${cellPx}px)`;
-  mazeGrid.style.gridTemplateRows=`repeat(${size},${cellPx}px)`;
-  const frag=document.createDocumentFragment();
-  for(let y=0;y<size;y++){
-    for(let x=0;x<size;x++){
-      const d=document.createElement("div"); d.className="cell";
-      if(maze[y][x]===1) d.classList.add("wall");
-      if(x===player.x&&y===player.y) d.classList.add("player");
-      if(x===endCell.x&&y===endCell.y) d.classList.add("end");
-      if(ghostPos&&ghostPos.x===x&&ghostPos.y===y) d.classList.add("ghost");
-      frag.appendChild(d);
-    }
-  }
-  mazeGrid.appendChild(frag);
-}
-
-/* --- Keys & Movement --- */
-document.addEventListener("keydown",(e)=>{
-  if(gameWon||["INPUT","TEXTAREA"].includes(document.activeElement.tagName)) return;
-  const k=e.key;
-  if(!["w","a","s","d","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(k)) return;
-  e.preventDefault();
-  let nx=player.x,ny=player.y;
-  if(k==="w"||k==="ArrowUp") ny--; if(k==="s"||k==="ArrowDown") ny++;
-  if(k==="a"||k==="ArrowLeft") nx--; if(k==="d"||k==="ArrowRight") nx++;
-  if(maze[ny]&&maze[ny][nx]===0){player.x=nx; player.y=ny; moves.push({x:nx,y:ny,t:Math.round(now())}); renderMaze(); checkVictory();}
-});
-document.addEventListener("keyup",(e)=>{if(["w","a","s","d","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) keys[e.key]=false;});
-
-/* --- Stopwatch --- */
-function startStopwatch(){startTime=now(); stopwatchDisplay.textContent=formatTime(0); timerInterval=setInterval(()=>stopwatchDisplay.textContent=formatTime(Math.round(now()-startTime)),30);}
+function startStopwatch(){startTime=performance.now(); stopwatchDisplay.textContent=formatTime(0); timerInterval=setInterval(()=>{stopwatchDisplay.textContent=formatTime(Math.round(performance.now()-startTime));},30);}
 function stopStopwatch(){clearInterval(timerInterval); timerInterval=null;}
 function resetStopwatch(){stopStopwatch(); startTime=null; stopwatchDisplay.textContent="00:00.000";}
 
-/* --- Victory --- */
-function checkVictory(){
-  if(player.x===endCell.x&&player.y===endCell.y&&!gameWon){
-    gameWon=true; stopStopwatch();
-    const totalTime=Math.round(now()-startTime);
-    xp+=50; runs.push({time:totalTime,date:new Date().toISOString()});
-    updateXPRuns(); saveStatsToServer();
-    showVictory(totalTime);
-  }
-}
-function showVictory(totalTime){
-  const overlay=document.createElement("div");
-  Object.assign(overlay.style,{position:'absolute',inset:'0',display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'center',background:'rgba(0,0,0,0.8)',zIndex:9999});
-  const title=document.createElement("h1"); title.innerText="🏆 VICTORY!"; title.style.color="gold"; title.style.fontSize="48px";
-  const timeText=document.createElement("h4"); timeText.innerText=`Time: ${formatTime(totalTime)}`; timeText.style.color="#fff";
-  const menuBtn=document.createElement("button"); menuBtn.className="btn btn-secondary mt-3"; menuBtn.textContent="Return to Menu"; menuBtn.onclick=()=>{overlay.remove(); mazeScreen.classList.add("d-none"); mainMenu.classList.remove("d-none"); resetGame();};
-  overlay.append(title,timeText,menuBtn);
-  mazeScreen.appendChild(overlay);
-}
+function updateKeystrokes(){const layout=['W','A','S','D']; keystrokesDiv.innerHTML=''; layout.forEach(k=>{const span=document.createElement('span'); span.textContent=k; const lower=k.toLowerCase(); if(keys[lower]||keys[arrowMap[k]]) span.style.background='limegreen'; keystrokesDiv.appendChild(span);});}
+const arrowMap={W:'ArrowUp',A:'ArrowLeft',S:'ArrowDown',D:'ArrowRight'};
+document.addEventListener('keydown',(e)=>{if(gameWon)return; if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault(); keys[e.key]=true; updateKeystrokes(); if(!startTime) startStopwatch(); let nx=player.x,ny=player.y; if(e.key==='w'||e.key==='ArrowUp') ny--; if(e.key==='s'||e.key==='ArrowDown') ny++; if(e.key==='a'||e.key==='ArrowLeft') nx--; if(e.key==='d'||e.key==='ArrowRight') nx++; if(maze[ny]&&maze[ny][nx]===0){player.x=nx; player.y=ny; moves.push({x:nx,y:ny,t:Math.round(performance.now()-startTime)}); renderMaze(); checkVictory();}}});
+document.addEventListener('keyup',(e)=>{if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)){keys[e.key]=false; updateKeystrokes();}});
 
-/* --- Save stats to server --- */
-async function saveStatsToServer(){
-  if(!token) return;
-  try{
-    await fetch(`https://supermaze-auth.onrender.com/api/stats/${token}`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({xp,completed:runs.length,run:runs[runs.length-1]})
-    });
-  }catch(e){console.error("Failed to save stats",e);}
-}
+function checkVictory(){if(player.x===endCell.x&&player.y===endCell.y&&!gameWon){gameWon=true; stopStopwatch(); const totalTime=Math.round(performance.now()-startTime); victoryTime.textContent=`Time: ${formatTime(totalTime)}`; victoryModal.classList.remove('d-none'); const runData={time:totalTime,moves:clone2D(moves)}; updateStats(stats.xp+Math.floor(totalTime/100), runData);}}
+function clone2D(arr){return arr.map(r=>r.slice());}
 
-/* --- Reset game --- */
-function resetGame(){gameWon=false; startTime=null; moves=[]; resetStopwatch(); generateMaze(); renderMaze();}
+victoryMenuBtn.onclick=()=>{victoryModal.classList.add('d-none'); mazeScreen.classList.add('d-none'); connectScreen.classList.remove('d-none'); moves=[]; resetStopwatch(); gameWon=false;}
+victoryReplayBtn.onclick=()=>{alert('Replay not implemented in this version.');}
 
-/* --- Singleplayer start --- */
-singleBtn.onclick=()=>{
-  mainMenu.classList.add("d-none"); mazeScreen.classList.remove("d-none"); resetGame(); startStopwatch();
+singleBtn.onclick=()=>{generateMaze(); renderMaze(); mazeScreen.classList.remove('d-none'); connectScreen.classList.add('d-none'); moves=[]; gameWon=false; resetStopwatch();}
+backBtn.onclick=()=>{mazeScreen.classList.add('d-none'); connectScreen.classList.remove('d-none'); moves=[]; resetStopwatch(); gameWon=false;}
+
+continueBtn.onclick=async()=>{
+  username=usernameInput.value.trim(); if(!username)return alert('Enter username'); localStorage.setItem('maze_username',username);
+  await fetchNewToken();
+  usernameScreen.classList.add('d-none'); connectScreen.classList.remove('d-none');
+  updateStatsDisplay();
 };
 
-/* --- Back --- */
-backBtn.onclick=()=>{
-  mazeScreen.classList.add("d-none"); mainMenu.classList.remove("d-none");
-};
+openJoinBtn.onclick=()=>{joinCard.classList.toggle('d-none'); if(!serverPortInput.value) serverPortInput.value='3000';};
 
-/* --- Multiplayer join --- */
-/* already handled above */
+checkServerBtn.onclick=async()=>{const host=serverIpInput.value, port=serverPortInput.value||'3000'; try{const res=await fetch(`http://${host}:${port}`,{mode:'no-cors'}); alert('Server reachable');}catch(e){alert('Server not reachable');}};
 
-/* --- Leaderboard --- */
-leaderboardBtn.onclick=()=>{
-  if(!runs.length) return alert("No runs recorded.");
-  const sorted=runs.slice().sort((a,b)=>a.time-b.time);
-  const text=sorted.map((r,i)=> `${i+1}. Time: ${formatTime(r.time)} | Date: ${new Date(r.date).toLocaleString()}`).join("\n");
-  alert("🏁 Leaderboard:\n"+text);
-};
+connectServerBtn.onclick=()=>{const host=serverIpInput.value, port=serverPortInput.value||'3000'; if(!host)return alert('Enter host'); const ok=confirm(`Redirect to http://${host}:${port}?`); if(ok) window.location.href=`http://${host}:${port}`;};
 
-/* --- Init --- */
-window.addEventListener("load",()=>{
-  const storedName = localStorage.getItem("supermaze_username");
-  if(storedName){ usernameInput.value=storedName; }
-});
+if(username){usernameInput.value=username; continueBtn.click();}
 </script>
 </body>
 </html>
